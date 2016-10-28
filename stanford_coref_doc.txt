@@ -1,0 +1,42 @@
+							##斯坦福NLP包使用中文指代消解方法##
+
+1. 下载stanford corenlp和中文model, 将中文model的jar文件放到解压后的stanfordcorenlp目录下
+
+2. 在要使用指代消解的java project中加入corenlp目录下所有jar文件的reference
+
+3. 代码例子		
+				{
+					String text = "斯坦福大学坐落在美国,它很大.小明吃棒冰,他很胖.";
+			        args = new String[] {"-props", "edu/stanford/nlp/hcoref/properties/zh-coref-default.properties"};
+			        Annotation document = new Annotation(text);
+			        Properties props = StringUtils.argsToProperties(args);
+			        props.replace("ssplit.boundaryTokenRegex", "[.]|[!?]+|[。]|[！？]+",\ "[.,]|[!?]+|[。，]|[！？]+");
+			        StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+			        for (int i=0;i<10;i++){
+				        pipeline.annotate(document);
+					//	pipeline.prettyPrint(document, System.out);
+		
+						//指代消解		
+				        for (CorefChain cc : document.get(\			CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
+				            System.out.println("\t" + cc);
+				        }
+						//
+
+				        
+		        }
+
+		        3.1 text - 用于指代消解的文本, 同样也支持文件, 需要自己读入
+		        	args - 调用stanford corenlp包时的arguments,其中
+		        		   "edu/stanford/nlp/hcoref/properties/zh-coref-default.properties"
+		        		   用于配置解析句子和指代消解的一些参数, 其中的具体内容可以被print出来查看.
+		        	document - 将待解析的文本转换成被coreNLP支持的Annotation格式
+		        	props - 将String格式的args转换成被支持的Properties格式,
+		        			可用props.replace/set/put等改变或添加设置
+		        	pipeline - 根据props配置的用于解析句子的annotator, 只需生成一个实例
+		        			   使用pipeline.annotate(document)来annotate指定的Annotation文件
+		        			   解析完成的结果储存在document中
+		        			   可用pipeline.prettyprint来查看解析后的结果(包括指代消解的结果和其他环节的结果)
+		        	(如果只需要查看指代消解的结果, 则用上文代码中'//指代消解'处的循环)
+
+4. 如果出现任何outofmemory error, 则要在run configuration里为jvm加上'-Xmx5g'或6g及以上的命令,
+   来分配更大的运行内存
